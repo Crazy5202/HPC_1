@@ -1,5 +1,15 @@
 #include <iostream>
+
 #include <mpi.h>
+#include <unistd.h>
+
+void waitForAttach() {
+    volatile int i = 0;
+    printf("PID %d ready for attach\n", getpid());
+    fflush(stdout);
+    while (0 == i)
+        sleep(5);
+}
 
 int main(int argc, char** argv)
 {
@@ -9,6 +19,8 @@ int main(int argc, char** argv)
     // Get the rank of the current process
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    waitForAttach();
 
     if (rank == 0) // Process 0 (Sender)
     {

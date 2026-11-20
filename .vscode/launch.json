@@ -1,19 +1,49 @@
 {
     "version": "0.2.0",
     "configurations": [
+        // {
+        //     "name": "MPI Build and launch active file",
+        //     "type": "cppdbg",
+        //     "request": "launch",
+        //     "program": "/usr/lib64/openmpi/bin/mpirun",
+        //     "args": [
+        //         "-n", "1", // ДЛЯ ИЗМЕНЕНИЯ
+        //         "gdb", "-ex", "run", "-ex", "bt",
+        //         "${fileDirname}/${fileBasenameNoExtension}.o"
+        //     ],
+        //     "cwd": "${fileDirname}",
+        //     "externalConsole": false,
+
+        //     "stopAtEntry": false,
+
+        //     "MIMode": "gdb",
+        //     "miDebuggerPath": "/usr/bin/gdb",
+
+        //     "preLaunchTask": "mpicxx build active file",
+        //     "setupCommands": [
+        //         {
+        //             "description": "Enable pretty-printing for gdb",
+        //             "text": "-enable-pretty-printing",
+        //             "ignoreFailures": true
+        //         },
+        //         {
+        //             "description": "Set Disassembly Flavor to Intel",
+        //             "text": "-gdb-set disassembly-flavor intel",
+        //             "ignoreFailures": true
+        //         }
+        //     ],
+        // },
+        
         {
-            "name": "MPI Build and debug active file",
+            "name": "MPI Attach to Process",
             "type": "cppdbg",
-            "request": "launch",
-            "program": "/usr/lib64/openmpi/bin/mpirun",
-            "args": [
-                "-n",
-                "2",
-                "${fileDirname}/${fileBasenameNoExtension}.o",
-            ],
-            "cwd": "${fileDirname}",
-            "externalConsole": false,
-            "preLaunchTask": "mpicxx build active file",
+            "request": "attach",
+            "processId": "${command:pickProcess}",
+            "program": "${fileDirname}/${fileBasenameNoExtension}.o",
+
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
@@ -25,7 +55,7 @@
                     "text": "-gdb-set disassembly-flavor intel",
                     "ignoreFailures": true
                 }
-            ],
-        },
+            ]
+        }
     ]
 }

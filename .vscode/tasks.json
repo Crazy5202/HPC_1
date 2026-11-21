@@ -6,10 +6,10 @@
       "label": "mpicxx build active file",
       "command": "/usr/lib64/openmpi/bin/mpicxx",
       "args": [
-        "-g",
-        "${file}",
-        "-o",
-        "${fileDirname}/${fileBasenameNoExtension}.o"
+        "-g", "${file}",
+        "-std=c++17",
+        "-I", "${workspaceFolder}/include",
+        "-o", "${fileDirname}/${fileBasenameNoExtension}.o"
       ],
       "problemMatcher": ["$gcc"],
       "group": {

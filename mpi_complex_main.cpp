@@ -4,7 +4,7 @@
 int main(int argc, char* argv[]) 
 {
     if (argc < 4) {
-        std::cerr << "Ошибка: укажите аргументы <m>, <eps>, <MAXITERS>.\n";
+        std::cerr << "Ошибка: укажите аргументы <m>, <eps>, <MAXITERS>. Опицональные аргументы: <filepath_A> и <filepath_b>.\n";
         return 1;
     }
 
@@ -15,7 +15,8 @@ int main(int argc, char* argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rk);
 
     int m,MAXITERS,chunk; // Длина x, максимальное число итераций, размер блока для вычислений на отдельном процессе
-    double eps, t; // Погрешность, время вычисления
+    double eps, t, // Погрешность, время вычисления
+        *B,*g,*x; // Для Bx=g - матрица B, вектор g, векторы x и xold текущего и прошлого приближений
 
     if(rk == 0) { // на root
         t = MPI_Wtime(); // запускаем таймер на root
@@ -23,6 +24,19 @@ int main(int argc, char* argv[])
         m = atoi(argv[1]); // считываем гиперпараметры для вычислений из консоли
         eps = atof(argv[2]);
         MAXITERS = atoi(argv[3]);
+
+        B = (double*)malloc(m*m*sizeof(double)); // выделяем память
+        g = (double*)malloc(m * sizeof(double));
+        x = (double*)malloc(m * sizeof(double));
+    }
+
+    double *xold = (double*)malloc(m * sizeof(double)); // xold выделяется на каждом процессе, т.к. нужен при умножении
+
+    if (rk==0) { // только на root
+        if (argc == 6) // заполняем B, g и начальное приближение xold
+            init(m, B, g, xold); // полноценный ввод
+        else
+            init_test(m, B, g, xold); // тестовый ввод при отсутствии ссылок на файлы
 
         chunk = m / np; // вычисляем размер блока для вычислений на отдельном процессе
     }
@@ -33,17 +47,6 @@ int main(int argc, char* argv[])
         MPI_COMM_WORLD);
     MPI_Bcast(&chunk,1,MPI_INT,0,
         MPI_COMM_WORLD);
-    
-    double *B,*g,*x, // Для Bx=g - матрица B, вектор g, векторы x и xold текущего и прошлого приближений
-        *xold = (double*)malloc(m * sizeof(double)); // xold в отличие от x приходится выделять на каждом процессе
-
-    if(rk == 0) { // только для root
-        B = (double*)malloc(m*m*sizeof(double)); // выделяем память
-        g = (double*)malloc(m * sizeof(double));
-        x = (double*)malloc(m * sizeof(double));
-
-        init_test(m, B, g, xold); // заполняем B, g и начальное приближение xold
-    }
 
     double *Bloc, *gloc; // Локальные части B и g для использования всеми процессами в вычислениях
     int *chunks, *disps; // Массивы размеров блоков и их смещений

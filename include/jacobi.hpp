@@ -1,32 +1,39 @@
 #include <cmath>
 
 /**
-* @brief Подготавливает данные для Ax=f.
-* @param m Число строк матрицы B.
-* @param m Число столбцов матрицы B / длина вектора x.
-* @param B Матрица A с элементами, поделёнными на элементы с
-главной диагонали.
-* @param g Вектор f с элементами, поделёнными на элементы с
-главной диагонали.
-* @param x Вектор x.
+* @brief Считывает вектор из файла.
+* @param file Файл с вектором.
+* @param g Вектор правой части.
+* @return Число элементов m
 */
-void init(int k, int m, double* B, double* g, double* x) 
+int load_vector(char* file, double* g) 
 {
-    int i, j;
-    for(i = 0; i < m; i ++) {
-        g[i] /= B[i*m+i];
-        x[i] = 1.;
-        B[i * m + i] = 0.0;
-    }
-    for(i = 0; i < k; i ++) {    
-        for(j = 0; j < m; j ++) {
-            B[i * m + j] /= B[i * m + i];
-        }
-    }
+    // Логика считывания из файла
 }
 
 /**
 * @brief Подготавливает данные для Ax=f.
+* @param m Число строк и столбцов матрицы B / длина вектора x.
+* @param B Матрица уравнения.
+* @param g Вектор правой части.
+* @param x Вектор для начального приближения решения.
+*/
+void init(int m, double* B, double* g, double* x) 
+{
+    // Логика считывания из файлов
+    for(int i = 0; i < m; i ++) {
+        double& denom = B[i*m+i];
+        g[i] /= denom;
+        x[i] = 1.;
+        for(int j = 0; j < m; j ++) {
+            B[i * m + j] /= denom;
+        }
+        denom = 0.0;
+    }
+}
+
+/**
+* @brief Использует базовые данные для Ax=f (решение - вектор 1, 2, ... m).
 * @param m Длина вектора x.
 * @param B Матрица A с элементами, поделёнными на элементы с
 главной диагонали.
@@ -36,15 +43,12 @@ void init(int k, int m, double* B, double* g, double* x)
 */
 void init_test(int m, double* B, double* g, double* x) 
 {
-    int i, j;
-    for(i = 0; i < m; i ++) {    
-        for(j = 0; j < m; j ++) {
-            B[i * m + j] = 1./(double)(2 * m);
-        }
-    }
-    for(i = 0; i < m; i ++) {
+    for(int i = 0; i < m; i ++) {
         g[i] = ((double)m+1)/4.+(1.-1./(double)(2*m))*(i+1);
         x[i] = 1.;
+        for(int j = 0; j < m; j ++) {
+            B[i * m + j] = 1./(double)(2 * m);
+        }
         B[i * m + i] = 0.0;
     }
 }
@@ -73,7 +77,7 @@ double evalDiff(double* u, double* v, int m)
 * @param g Вектор.
 * @param xold Прошлое приближение вектора x.
 * @param x Вектор x.
-* @param k Число строк матрицы B, длина вектора f (g).
+* @param k Число строк матрицы B, длина вектора f (g). Размер чанка при распараллеливании.
 * @param m Число столбцов матрицы B, длина вектора x.
 */
 void matvec(double* B, double* g, double* xold, 

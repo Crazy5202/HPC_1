@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
         g = (double*)malloc(m * sizeof(double));
         x = (double*)malloc(m * sizeof(double));
 
-        init(m, B, g, xold); // заполняем B, g и начальное приближение xold
+        init_test(m, B, g, xold); // заполняем B, g и начальное приближение xold
     }
 
     double *Bloc, *gloc; // Локальные части B и g для использования всеми процессами в вычислениях
@@ -80,12 +80,12 @@ int main(int argc, char* argv[])
         MPI_COMM_WORLD);
 
     int i = 0;
-    double diff, *xloc = (double*)malloc(chunk*sizeof(double));
+    double diff, *xloc = (double*)malloc(chunks[rk] * sizeof(double));
 
     do {
         MPI_Bcast(xold, m, MPI_DOUBLE,0,MPI_COMM_WORLD); // root рассылает всем предыдущее приближение xold
 
-        matvec(Bloc,gloc,xold,xloc,chunk, m); // каждый процесс считает свою часть xloc = -Bloc*xold + gloc
+        matvec(Bloc,gloc,xold,xloc,chunks[rk], m); // каждый процесс считает свою часть xloc = -Bloc*xold + gloc
 
         MPI_Gatherv(xloc,chunks[rk],MPI_DOUBLE, // собираем локальные части xloc на root в полный вектор x
             x,chunks,disps,MPI_DOUBLE,0,
@@ -107,6 +107,8 @@ int main(int argc, char* argv[])
     if(rk == 0) { // только на root
         t = MPI_Wtime() - t; // вычисляем затраченное время, печатаем
         printf("%d iterations consumed %lf sec\n", i, t);
+        for (int i = 0; i<5; ++i) printf("%lf ", x[i]);
+        fflush(stdout);
     }
 
     MPI_Finalize(); // завершаем работу MPI

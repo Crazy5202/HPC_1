@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
         g = (double*)malloc(m * sizeof(double));
         x = (double*)malloc(m * sizeof(double));
 
-        init(m, B, g, xold); // заполняем B, g и начальное приближение xold
+        init_test(m, B, g, xold); // заполняем B, g и начальное приближение xold
     }
 
     double *Bloc, *gloc; // Локальные части B и g для использования всеми процессами в вычислениях
@@ -87,6 +87,7 @@ int main(int argc, char* argv[])
     if(rk == 0) { // только на root
         t = MPI_Wtime() - t; // вычисляем затраченное время, печатаем
         printf("%d iterations consumed %lf sec\n", i, t);
+        for (int i = 0; i<5; ++i) printf("%lf ", x[i]);
     }
 
     MPI_Finalize(); // завершаем работу MPI

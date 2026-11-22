@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
     xold = (double*)malloc(m * sizeof(double));
     x = (double*)malloc(m * sizeof(double));
 
-    init(m, B, g, xold);
+    init_test(m, B, g, xold);
 
     do {
         matvec(B, g, xold, x, m, m);
@@ -43,4 +43,5 @@ int main(int argc, char* argv[])
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
     printf("%d iterations consumed %lf seconds\n", I, (duration.count()/1e6));
+    for (int i = 0; i<5; ++i) printf("%lf ", x[i]);
 }

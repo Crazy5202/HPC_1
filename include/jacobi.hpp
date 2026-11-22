@@ -1,15 +1,6 @@
-#include <cmath>
+#pragma once
 
-/**
-* @brief Считывает вектор из файла.
-* @param file Файл с вектором.
-* @param g Вектор правой части.
-* @return Число элементов m
-*/
-int load_vector(char* file, double* g) 
-{
-    // Логика считывания из файла
-}
+#include <cmath>
 
 /**
 * @brief Подготавливает данные для Ax=f.

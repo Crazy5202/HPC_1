@@ -1,10 +1,13 @@
 #include <mpi_utils.hpp>
 #include <jacobi.hpp>
 
+#include <mpi_utils.hpp>
+#include <jacobi.hpp>
+
 int main(int argc, char* argv[]) 
 {
     if (argc < 4) {
-        std::cerr << "Ошибка: укажите аргументы <m>, <eps>, <MAXITERS>. Опицональные аргументы: <filepath_A> и <filepath_b>.\n";
+        std::cerr << "Ошибка: укажите аргументы <eps>, <MAXITERS>. Опции ввода: <m> или <filepath_vec> + <filepath_mat>.\n";
         return 1;
     }
 
@@ -14,42 +17,50 @@ int main(int argc, char* argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &np); // узнаём число и ранг
     MPI_Comm_rank(MPI_COMM_WORLD, &rk);
 
-    int m,MAXITERS,chunk; // Длина x, максимальное число итераций, размер блока для вычислений на отдельном процессе
-    double eps, t, // Погрешность, время вычисления
-        *B,*g,*x; // Для Bx=g - матрица B, вектор g, векторы x и xold текущего и прошлого приближений
+    int m = 0, MAXITERS = 0, chunk = 0; // Длина x, максимальное число итераций, размер блока для вычислений на отдельном процессе
+    double eps = 0.0, t = 0.0, // Погрешность, время вычисления
+        *B = NULL,*g = NULL,*x = NULL; // Для Bx=g - матрица B, вектор g, векторы x и xold текущего и прошлого приближений
 
     if(rk == 0) { // на root
         t = MPI_Wtime(); // запускаем таймер на root
 
-        m = atoi(argv[1]); // считываем гиперпараметры для вычислений из консоли
-        eps = atof(argv[2]);
-        MAXITERS = atoi(argv[3]);
+        eps = atof(argv[1]);
+        MAXITERS = atoi(argv[2]);
 
-        B = (double*)malloc(m*m*sizeof(double)); // выделяем память
-        g = (double*)malloc(m * sizeof(double));
+        if (argc == 5) { // Получаем m из файла либо ввода
+            m = load_vector(argv[3], g); // Загрузка с выделением памяти
+            load_matrix(argv[4], m, B);
+        } else {
+            m = atoi(argv[3]); // считываем гиперпараметры для вычислений из консоли
+            g = (double*)malloc(m * sizeof(double));
+            B = (double*)malloc(m*m*sizeof(double)); // выделяем память
+        }
+        
         x = (double*)malloc(m * sizeof(double));
+
+        chunk = m / np; // вычисляем размер блока для отдельного процесса
     }
+
+    MPI_Bcast(&m, 1, MPI_INT, 0, // передаём гиперпараметры и chunk с root на другие процессы
+        MPI_COMM_WORLD);
+    MPI_Bcast(&MAXITERS, 1, MPI_INT, 0,
+        MPI_COMM_WORLD);
+    MPI_Bcast(&eps, 1, MPI_DOUBLE, 0,
+        MPI_COMM_WORLD);
+    MPI_Bcast(&chunk, 1, MPI_INT, 0,
+        MPI_COMM_WORLD);
 
     double *xold = (double*)malloc(m * sizeof(double)); // xold выделяется на каждом процессе, т.к. нужен при умножении
 
     if (rk==0) { // только на root
-        if (argc == 6) // заполняем B, g и начальное приближение xold
+        if (argc == 5)  // Иницилизируем реальные данные либо тестовые
             init(m, B, g, xold); // полноценный ввод
         else
-            init_test(m, B, g, xold); // тестовый ввод при отсутствии ссылок на файлы
-
-        chunk = m / np; // вычисляем размер блока для вычислений на отдельном процессе
+            init_test(m, B, g, xold); // тестовый ввод при отсутствии ссылок на файлы с данными
     }
     
-    MPI_Bcast(&m, 1, MPI_INT, 0, // передаём гиперпараметры для вычислений с root на другие процессы
-        MPI_COMM_WORLD);
-    MPI_Bcast(&eps,1,MPI_DOUBLE,0,
-        MPI_COMM_WORLD);
-    MPI_Bcast(&chunk,1,MPI_INT,0,
-        MPI_COMM_WORLD);
-
-    double *Bloc, *gloc; // Локальные части B и g для использования всеми процессами в вычислениях
-    int *chunks, *disps; // Массивы размеров блоков и их смещений
+    double *Bloc = NULL, *gloc = NULL; // Локальные части B и g для использования всеми процессами в вычислениях
+    int *chunks = NULL, *disps = NULL; // Массивы размеров блоков и их смещений
     
     chunks = (int*) malloc(np * sizeof(int));
     disps = (int*) malloc(np * sizeof(int));
@@ -65,8 +76,8 @@ int main(int argc, char* argv[])
     Bloc = (double*)malloc(chunks[rk] * sizeof(double)); // выделяем память
 
     MPI_Scatterv(B,chunks,disps, // раздаём матрицу B из root в процессы
-        MPI_DOUBLE,Bloc,chunks[rk],MPI_DOUBLE,
-        0, MPI_COMM_WORLD);
+        MPI_DOUBLE,Bloc,chunks[rk],MPI_DOUBLE,0,
+        MPI_COMM_WORLD);
 
     for(int i = 0; i < np; i++) { // настройка раздачи вектора g
         disps[i] = i * chunk; // смещение i-го блока вектора: chunk элементов
@@ -83,7 +94,7 @@ int main(int argc, char* argv[])
         MPI_COMM_WORLD);
 
     int i = 0;
-    double diff, *xloc = (double*)malloc(chunks[rk] * sizeof(double));
+    double diff = 0.0, *xloc = (double*)malloc(chunks[rk] * sizeof(double));
 
     do {
         MPI_Bcast(xold, m, MPI_DOUBLE,0,MPI_COMM_WORLD); // root рассылает всем предыдущее приближение xold
@@ -111,6 +122,7 @@ int main(int argc, char* argv[])
         t = MPI_Wtime() - t; // вычисляем затраченное время, печатаем
         printf("%d iterations consumed %lf sec\n", i, t);
         for (int i = 0; i<5; ++i) printf("%lf ", x[i]);
+        printf("\n");
         fflush(stdout);
     }
 

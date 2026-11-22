@@ -46,24 +46,38 @@ int main(int argc, char* argv[])
     }
 
     double *Bloc, *gloc; // Локальные части B и g для использования всеми процессами в вычислениях
-    int *chunks, *disps; // Массивы 
+    int *chunks, *disps; // Массивы размеров блоков и их смещений
     
-    if(rk == 0) { // только для rootы
-        chunks = (int*) malloc(np * sizeof(int));
-        disps = (int*) malloc(np * sizeof(int));
+    chunks = (int*) malloc(np * sizeof(int));
+    disps = (int*) malloc(np * sizeof(int));
+
+    for(int i = 0; i < np; i++) { // настройка раздачи матрицы B
+        disps[i] = i * chunk * m; // смещение i-го блока матрицы: chunk строк по m элементов
+        if(i == (np - 1)) // последний процесс
+            chunks[i] = (m - (np - 1) * chunk)*m; // остаток строк матрицы
+        else
+            chunks[i] = chunk * m; // chunk строк по m элементов
     }
 
-    Bloc = (double*)malloc(chunk * m * sizeof(double)); // выделяем память
+    Bloc = (double*)malloc(chunks[rk] * sizeof(double)); // выделяем память
 
-    MPI_Scatter(B, m*chunk, // раздаём матрицу B из root в процессы
-        MPI_DOUBLE, Bloc, m*chunk, MPI_DOUBLE,
+    MPI_Scatterv(B,chunks,disps, // раздаём матрицу B из root в процессы
+        MPI_DOUBLE,Bloc,chunks[rk],MPI_DOUBLE,
         0, MPI_COMM_WORLD);
 
-    gloc = (double*)malloc(chunk * sizeof(double)); // выделяем память
-    
-    MPI_Scatter(g,chunk, // раздаём вектор g из root в процессы
-        MPI_DOUBLE,gloc,chunk,MPI_DOUBLE,
-        0, MPI_COMM_WORLD);
+    for(int i = 0; i < np; i++) { // настройка раздачи вектора g
+        disps[i] = i * chunk; // смещение i-го блока вектора: chunk элементов
+        if(i == (np - 1)) // последний процесс
+            chunks[i] = m - (np - 1) * chunk; // остаток элементов вектора
+        else
+            chunks[i] = chunk; // chunk элементов
+    }
+
+    gloc = (double*)malloc(chunks[rk] * sizeof(double)); // выделяем память
+
+    MPI_Scatterv(g,chunks,disps,MPI_DOUBLE, // раздаём вектор g из root в процессы
+        gloc,chunks[rk],MPI_DOUBLE,0,
+        MPI_COMM_WORLD);
 
     int i = 0;
     double diff, *xloc = (double*)malloc(chunk*sizeof(double));
@@ -73,8 +87,8 @@ int main(int argc, char* argv[])
 
         matvec(Bloc,gloc,xold,xloc,chunk, m); // каждый процесс считает свою часть xloc = -Bloc*xold + gloc
 
-        MPI_Gather(xloc,chunk,MPI_DOUBLE, // собираем локальные части xloc на root в полный вектор x
-            x, chunk, MPI_DOUBLE,0,
+        MPI_Gatherv(xloc,chunks[rk],MPI_DOUBLE, // собираем локальные части xloc на root в полный вектор x
+            x,chunks,disps,MPI_DOUBLE,0,
             MPI_COMM_WORLD);
 
         if(rk == 0) { // только root

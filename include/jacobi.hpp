@@ -13,13 +13,13 @@ void init(int m, double* B, double* g, double* x)
 {
     // Логика считывания из файлов
     for(int i = 0; i < m; i ++) {
-        double& denom = B[i*m+i];
-        g[i] /= denom;
+        g[i] /= B[i*m+i];
         x[i] = 1.;
         for(int j = 0; j < m; j ++) {
-            B[i * m + j] /= denom;
+            if (i==j) continue;
+            B[i * m + j] /= B[i*m+i];
         }
-        denom = 0.0;
+        B[i*m+i] = 0.0;
     }
 }
 

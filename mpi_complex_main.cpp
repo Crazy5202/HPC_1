@@ -39,17 +39,18 @@ int main(int argc, char* argv[])
             load_vector(argv[5], g, m);
         }
 
-        for(int i = 0; i < m; i ++) {
-            for(int j = 0; j < m; j ++) {
-                printf("%lf ", B[i*m+j]);
-            }
-            printf("\n");
-        }
+        // for(int i = 0; i < m; i ++) {
+        //     for(int j = 0; j < m; j ++) {
+        //         printf("%lf ", B[i*m+j]);
+        //     }
+        //     printf("\n");
+        // }
 
-        for(int i = 0; i < m; i ++) {
-            printf("%lf ", g[i]);
-        }
-        printf("\n");
+        // for(int i = 0; i < m; i ++) {
+        //     printf("%lf ", g[i]);
+        // }
+
+        // printf("\n");
 
         chunk = m / np; // вычисляем размер блока для отдельного процесса
     }

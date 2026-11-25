@@ -11,7 +11,6 @@
 */
 void init(int m, double* B, double* g, double* x) 
 {
-    // Логика считывания из файлов
     for(int i = 0; i < m; i ++) {
         g[i] /= B[i*m+i];
         x[i] = 1.;

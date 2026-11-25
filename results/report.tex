@@ -1,0 +1,69 @@
+\documentclass[14pt, a4paper, oneside]{extarticle}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{geometry}
+\geometry{top=1cm, bottom=0.5cm, left=1.25cm, right=1.25cm}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage{fontawesome5}
+\usepackage{ragged2e}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\hypersetup{
+    colorlinks=black,
+    allcolors=blue,
+    pdfborderstyle={/S/U/W 0},
+    allbordercolors=blue
+}
+
+\begin{document}
+
+Рассматривается система линейных алгебраических уравнений
+\begin{equation}\label{eq:slae}
+A x = b,
+\end{equation}
+где $A \in \mathbb{R}^{n \times n}$~--- квадратная матрица с ненулевыми
+диагональными элементами $a_{ii} \neq 0$,
+ $x = (x_1, \dots, x_n)^{T}$~--- вектор неизвестных,
+ $b = (b_1, \dots, b_n)^{T}$~--- вектор правой части.
+
+Представим матрицу $A$ в виде суммы диагональной и внедиагональной частей:
+\begin{equation}\label{eq:split}
+A = D + L + U, \qquad
+D = \operatorname{diag}(a_{11}, \dots, a_{nn}),
+\end{equation}
+где $D$~--- диагональная матрица, $L$ и $U$~--- строго нижняя и строго
+верхняя треугольные части матрицы $A$. Тогда \eqref{eq:slae} записывается
+как $D x = b - (L + U) x$, и итерационный процесс принимает матричный вид
+\begin{equation}\label{eq:jacobi_matrix}
+x^{(k+1)} = D^{-1}\bigl(b - (L + U)\, x^{(k)}\bigr)
+          = \bigl(I - D^{-1} A\bigr)\, x^{(k)} + D^{-1} b,
+\qquad k = 0, 1, 2, \dots
+\end{equation}
+где $x^{(0)}$~--- начальное приближение. В компонентной записи итерации
+метода Якоби имеют вид
+\begin{equation}\label{eq:jacobi_comp}
+x_i^{(k+1)} = \frac{1}{a_{ii}}
+\Bigl( b_i - \sum_{j \ne i} a_{ij}\, x_j^{(k)} \Bigr),
+\qquad i = 1, \dots, n.
+\end{equation}
+
+\textbf{Теорема (достаточное условие сходимости).} Если матрица $A$ обладает строгим диагональным преобладанием,
+\begin{equation}\label{eq:diagdom}
+|a_{ii}| > \sum_{j \ne i} |a_{ij}|, \qquad i = 1, \dots, n,
+\end{equation}
+то метод Якоби сходится для любого $x^{(0)}$. 
+
+Итерации прекращаются при достижении заданной точности $\varepsilon > 0$ по разности
+соседних приближений:
+\begin{equation}\label{eq:stop}
+\frac{\bigl\| x^{(k)} - x^{(k-1)} \bigr\|}{\bigl\| x^{(k)} \bigr\|} \le \varepsilon.
+\end{equation}
+
+\end{document}

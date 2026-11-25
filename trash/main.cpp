@@ -20,9 +20,9 @@ int main(int argc, char* argv[])
     double *B, *g, *x, *xold, 
         eps, diff, t;
 
-    m = atoi(argv[1]);
-    eps = atof(argv[2]);
-    MAXITERS = atoi(argv[3]);
+    eps = atof(argv[1]);
+    MAXITERS = atoi(argv[2]);
+    m = atoi(argv[3]);
 
     B = (double*)malloc(m * m * sizeof(double));
     g = (double*)malloc(m * sizeof(double));
@@ -43,5 +43,5 @@ int main(int argc, char* argv[])
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
     printf("%d iterations consumed %lf seconds\n", I, (duration.count()/1e6));
-    for (int i = 0; i<5; ++i) printf("%lf ", x[i]);
+    // for (int i = 0; i<5; ++i) printf("%lf ", x[i]);
 }

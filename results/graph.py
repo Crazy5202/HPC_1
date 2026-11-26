@@ -20,6 +20,8 @@ plt.ylabel('Время выполнения, с')
 
 plt.grid(True, which="both", ls="-", alpha=0.2)
 
+plt.xticks([100, 1000, 2500, 5000, 7500, 10000])
+
 plt.legend()
 
 # Отображаем график
